@@ -1,0 +1,512 @@
+key =name_backbone(name='Buceros rhinoceros')$speciesKey
+dat <- occ_search(taxonKey=key, return='data', limit=1000)
+dat
+coordinates(dat) = c("decimalLongitude", "decimalLatitude") #Set coordinates to a Spatial data frame
+library(dismo)
+library(maptools)
+coordinates(dat) = c("decimalLongitude", "decimalLatitude") #Set coordinates to a Spatial data frame
+data(wrld_simpl)
+plot(wrld_simpl, axes=TRUE, col='light green', las=1) #plot points on a world map
+points(dat, col='orange', pch=20, cex=0.75)
+zoom(wrld_simpl, axes=TRUE, las=1, col='light green') #zoom to a specific region
+library(spocc)
+spp= c("Rhinoplax vigil", "Buceros rhinoceros", "Anthracoceros malayanus")
+dat = occ(query = spp, from ='gbif', gbifopts = list(hasCoordinate=TRUE))
+install.packages("mapr")
+library(mapr)
+map_leaflet(dat)
+dat = fixnames(dat)
+map_gist(dat, color = c("#976AAE","#6B944D","#BD5945"))
+library(spocc)
+spp= c("Rhinoplax vigil", "Buceros rhinoceros", "Anthracoceros malayanus")
+dat = occ(query = spp, from ='gbif', gbifopts = list(hasCoordinate=TRUE))
+library(mapr)
+map_leaflet(dat) #leaflet based interactive map
+library(ggplot2)
+map_ggmap(dat)
+install.packages("ggmap")
+library(ggmap)
+map_ggmap(dat)
+map_ggplot(dat, "malaysia")
+map_plot(dat, cex = 1, pch = 10)
+dat
+map_leaflet(dat) #leaflet based interactive map
+map_ggmap(dat) ##ggmap version
+install.packages("NicheMapR")
+install.packages("rJava")
+install.packages("enfa")
+library(maptools)
+data(wrld_simpl)
+file <- paste(system.file(package="dismo"), "/ex/bradypus.csv", sep="")
+bradypus <- read.table(file, header=TRUE, sep=',')
+plot(predictors, 1)
+library(rJava)
+install.packages("rJava")
+library(rJava)
+install.packages(c("NLP", "openNLP", "RWeka", "qdap"))
+install.packages("openNLPmodels.en",
+repos = "http://datacube.wu.ac.at/",
+type = "source")
+library(NLP)
+library(openNLP)
+library(RWeka)
+install.packages("stringr", dependencies = TRUE)
+setwd("F:\\SDM_in R\\Data\\1_Raster data\bioclim_land")
+pa=read.csv("Pres_abs.csv")
+setwd("F:\\SDM_in R\\Data\\1_Raster data\bioclim_land")
+setwd("F:\\PKNP\\Landsat_SupClass1\\2012")
+library(raster)
+c=raster("canopcvr2012a.tif")
+library(sp)
+library(rgdal)
+library(maptools)
+library(raster)
+setwd("F:\\PKNP\\Landsat_SupClass1\\2012")
+library(raster)
+c=raster("canopcvr2012a.tif")
+ht=raster("studyarea2012.tif")
+ht
+plot(ht)
+evi=raster("evi2012.tif")
+c=raster("canopcvr2012a.tif")
+evi=raster("ndvi2011a.tif")
+evi=raster("ndvi2011a.tif")
+plot(evi)
+c=raster("canopcvr2012a.tif")
+plot(c)
+h <- resample(ht,c, method = "ngb")
+e <- resample(evi,c, method = "ngb")
+plot(e)
+crs(c) <- "+proj=utm +zone=48 +datum=WGS84 +units=m"
+crs(h) <- "+proj=utm +zone=48 +datum=WGS84 +units=m"
+crs(e) <- "+proj=utm +zone=48 +datum=WGS84 +units=m"
+b=brick(c,h,e)
+hist(b)
+library(maptools)
+train<- readOGR(".","LULC2012b")
+train <- spTransform(train, CRS("+proj=utm +zone=48 +datum=WGS84"))
+train
+plot(h)
+plot(train, add = TRUE)
+head(train@data)
+str(train@data$Class_name)
+train@data$Code <- as.numeric(train@data$Class_name)
+train@data$Code <- as.numeric(train@data$id)
+train@data
+classes <- rasterize(train, h, field='Code')
+cols <- c("orange", "dark green")
+plot(classes, col=cols, legend=FALSE)
+covmasked <- mask(b, classes)
+plot(covmasked)
+names(classes) <- "class"
+trainingbrick <- addLayer(covmasked, classes)
+plot(trainingbrick)
+valuetable <- getValues(trainingbrick)
+head(valuetable)
+valuetable <- na.omit(valuetable)
+valuetable <- as.data.frame(valuetable)
+head(valuetable, n = 10)
+summary(valuetable)
+valuetable$class <- factor(valuetable$class, levels = c(1:3))
+kruskal.test(valuetable$canopcvr2012a   ~ valuetable$class)
+head(valuetable)
+library(randomForest)
+library(caret)
+set.seed(1) #pseudo-repeatability
+trainIndex = createDataPartition(valuetable$class, p = .75,
+list = FALSE,
+times = 1) #y as basis of splitting
+training = valuetable[ trainIndex,] #75% data for model training
+testing= valuetable[-trainIndex,] #25% for model testing
+head(training)
+modelRF <- randomForest(x=training[ ,c(1:3)], y=training$class, importance = TRUE)
+class(modelRF)
+str(modelRF)
+names(modelRF)
+modelRF$confusion
+varImpPlot(modelRF)
+p1=predict(modelRF, newdata=testing) #predict on the test data
+cm2 <- confusionMatrix(p1, testing$class)
+cm2$overall
+predLC <- predict(b, model=modelRF, na.rm=TRUE)
+plot(predLC)
+plot(predLC)
+cols <- c("dark green","grey","yellow")
+plot(predLC, col=cols, legend=FALSE)
+legend("bottomright",
+legend=c("Forest", "Bare Earth", "Cashew"),
+fill=cols, bg="white")
+predLC
+install.packages("SDMTools")
+library("SDMTools")
+nlcd_class_metrics <- ClassStat(mat = predLC, cellsize = 5)
+nlcd_class_metrics
+setwd("F:\\PKNP\\Landsat_SupClass1\\2015")
+c=raster("canopcvr2015.tif")
+c=raster("canopycvr2015.tif")
+plot(c)
+ht=raster("studyarea2015.tif")
+ht
+e=raster("NDVI2016a.tif")
+h <- resample(ht,c, method = "ngb")
+e <- resample(evi,c, method = "ngb")
+crs(c) <- "+proj=utm +zone=48 +datum=WGS84 +units=m"
+crs(h) <- "+proj=utm +zone=48 +datum=WGS84 +units=m"
+crs(e) <- "+proj=utm +zone=48 +datum=WGS84 +units=m"
+b=brick(c,h,e)
+hist(b)
+e=raster("NDVI2016a.tif")
+evi=raster("NDVI2016a.tif")
+e <- resample(evi,c, method = "ngb")
+crs(c) <- "+proj=utm +zone=48 +datum=WGS84 +units=m"
+crs(h) <- "+proj=utm +zone=48 +datum=WGS84 +units=m"
+crs(e) <- "+proj=utm +zone=48 +datum=WGS84 +units=m"
+b=brick(c,h,e)
+hist(b)
+hist(b)
+train<- readOGR(".","LULC2015b")
+train <- spTransform(train, CRS("+proj=utm +zone=48 +datum=WGS84"))
+train
+plot(h)
+plot(train, add = TRUE)
+head(train@data)
+str(train@data$Class_name)
+train@data$Code <- as.numeric(train@data$id)
+train@data
+classes <- rasterize(train, h, field='Code')
+cols <- c("orange", "dark green")
+plot(classes, col=cols, legend=FALSE)
+covmasked <- mask(b, classes)
+plot(covmasked)
+names(classes) <- "class"
+trainingbrick <- addLayer(covmasked, classes)
+plot(trainingbrick)
+valuetable <- getValues(trainingbrick)
+head(valuetable)
+valuetable <- na.omit(valuetable)
+valuetable <- as.data.frame(valuetable)
+head(valuetable, n = 10)
+summary(valuetable)
+valuetable$class <- factor(valuetable$class, levels = c(1:3))
+kruskal.test(valuetable$canopcvr2012a   ~ valuetable$class)
+valuetable$class <- factor(valuetable$class, levels = c(1:3))
+library(randomForest)
+library(caret)
+set.seed(1) #pseudo-repeatability
+trainIndex = createDataPartition(valuetable$class, p = .75,
+list = FALSE,
+times = 1) #y as basis of splitting
+training = valuetable[ trainIndex,] #75% data for model training
+testing= valuetable[-trainIndex,] #25% for model testing
+head(training)
+modelRF <- randomForest(x=training[ ,c(1:3)], y=training$class, importance = TRUE)
+class(modelRF)
+str(modelRF)
+names(modelRF)
+modelRF$confusion
+varImpPlot(modelRF)
+p1=predict(modelRF, newdata=testing) #predict on the test data
+cm2 <- confusionMatrix(p1, testing$class)
+cm2$overall
+predLC <- predict(b, model=modelRF, na.rm=TRUE)
+nlcd_class_metrics <- ClassStat(mat = predLC, cellsize = 5)
+nlcd_class_metrics
+plot(predLC)
+cols <- c("dark green","grey","yellow")
+plot(predLC, col=cols, legend=FALSE)
+legend("bottomright",
+legend=c("Forest", "Bare Earth", "Cashew"),
+fill=cols, bg="white")
+setwd("F:/SDM_in R/Data/1_Raster data/bioclim_land")
+pa=read.csv("Pres_abs.csv")
+tail(pa)
+summary(pa)
+pb=as.factor(pa$pb) #1 stands for presence and 0 for absence
+land=as.factor(pa$land) #land use categories are categorical
+head(pa)
+library(caret)
+set.seed(1) #pseudo-repeatability
+trainIndex = createDataPartition(pa$pb, p = .75,
+list = FALSE,
+times = 1) #y as basis of splitting
+training = pa[ trainIndex,] #75% data for model training
+testing= pa[-trainIndex,] #25% for model testing
+head(training)
+set.seed(825)
+train_control = trainControl(method="cv", number=10)
+mod_fit=train(pb~.,data=training,trControl=train_control,method="rf",importance=TRUE)
+summary(mod_fit)
+p1=predict(mod_fit, newdata=testing) #predict on the test data
+library(ModelMetrics)
+auc(testing$pb, p1)
+confusionMatrix(testing$pb, p1, cutoff = 0.5)
+modGBM=train(pb~.,data=training,trControl=train_control,method="gbm",importance=TRUE)
+modGBM=train(pb~.,data=training,trControl=train_control,method="gbm")
+modRF=train(pb~.,data=training,trControl=train_control,method="rf",importance=TRUE)
+ce(testing$pb, p1)#classification error
+confusionMatrix(testing$pb, p1, cutoff = 0.5)
+overall=(121+194)/(121+194+9+9)
+overall
+logLoss(testing$pb, p1, distribution = "binomial")
+modSVM=train(pb~.,data=training,trControl=train_control,method="svmPoly")
+results <- resamples(list(RF=modRF, GBM=modGbm, SVM=modSvm))
+results <- resamples(list(RF=modRF, GBM=modGBM, SVM=modSvm))
+results <- resamples(list(RF=modRF, GBM=modGBM, SVM=modSVM))
+summary(results)
+ce(testing$pb, p1)#classification error
+tail(pa)
+p1=predict(mod_fit, newdata=testing) #predict on the test data
+auc(testing$pb, p1) #actual Y value, predicted Y
+confusionMatrix(testing$pb, p1, cutoff = 0.5)
+overall=(121+194)/(121+194+9+9)
+overall
+logLoss(testing$pb, p1, distribution = "binomial")
+devtools::install_github("business-science/tibbletime")
+install.packages("tibbletime")
+library(tibbletime)
+library(tidyquant)
+install.packages("tidyquant")
+library(tidyquant)
+FANG_symbols = c("FB", "AMZN", "NFLX", "AAPL")
+FANG_tbl_d = FANG_symbols %>%
+tq_get(get = "stock.prices", from = "2013-01-01", to = "2016-12-31")
+FANG_tbl_d
+library(ggplot2)
+FANG_tbl_d %>%
+ggplot_facet_by_symbol(date, adjusted) +
+labs(title = "FANG Stocks: Adjusted Prices 2014 through 2016")
+ggplot_facet_by_symbol <- function(data, x, y, group = NULL) {
+# Setup expressions
+x_expr     <- rlang::enquo(x)
+y_expr     <- rlang::enquo(y)
+group_expr <- rlang::enquo(group)
+if (group_expr == ~NULL) {
+# No groups
+g <- data %>%
+ggplot(aes(x = rlang::eval_tidy(rlang::`!!`(x_expr)),
+y = rlang::eval_tidy(rlang::`!!`(y_expr)),
+color = symbol)) +
+labs(x = quo_name(x_expr),
+y = quo_name(y_expr))
+} else {
+# Deal with groups
+g <- data %>%
+ggplot(aes(x = rlang::eval_tidy(rlang::`!!`(x_expr)),
+y = rlang::eval_tidy(rlang::`!!`(y_expr)),
+color = symbol,
+group = rlang::eval_tidy(rlang::`!!`(group_expr))
+)
+)  +
+labs(x = quo_name(x_expr),
+y = quo_name(y_expr),
+group = quo_name(group_expr))
+}
+# Add faceting and theme
+g <- g +
+geom_line() +
+facet_wrap(~ symbol, ncol = 2, scales = "free_y") +
+scale_color_tq() +
+theme_tq()
+return(g)
+}
+FANG_tbl_d %>%
+ggplot_facet_by_symbol(date, adjusted) +
+labs(title = "FANG Stocks: Adjusted Prices 2013 through 2016")
+FANG_tbl_time_d <- FANG_tbl_d %>%
+as_tbl_time(index = date)
+FANG_tbl_time_d %>%
+ggplot_facet_by_symbol(date, adjusted) +
+labs(title = "Working with tbltime: Reacts same as tbl class")
+q=seq(0,100,1)
+p =0.6
+y=500 + p*(q-10)^3
+plot(q,y,type='l',col='red',main='Nonlinear relationship',lwd=5)
+data("ChickWeight")
+head(ChickWeight)
+cw1 <- subset(ChickWeight,Diet=='1')
+head(cw1)
+plot(weight ~ Time, data = cw1)
+fit1= lm(weight ~ Time, data = cw1)
+summary(fit1)
+fit2= lm(weight ~ Time+ I(Time*Time), data = cw1) #polynomial terms
+summary(fit2)
+AIC(fit2)
+fit3=lm(weight ~ Time+ I(Time*Time)+I(Time*Time*Time), data = cw1)
+summary(fit3)
+AIC(fit3)
+fit2a= lm(weight ~ poly(Time,2), data = cw1)
+summary(fit2a)
+AIC(fit2a)
+fit3a= lm(weight ~ poly(Time,3), data = cw1)
+summary(fit3a)
+AIC(fit3a)
+library(nls2) #earlier version nls
+data("Loblolly")
+str(Loblolly)
+head(Loblolly)
+plot(Loblolly$age,Loblolly$height)
+x = Loblolly$age
+y =Loblolly$height
+m <- nls(y ~ a + b * I(x^z), start = list(a = 1, b = 1, z = 1))
+m
+lines(x, fitted(m), lty = 2, col = "red", lwd = 2)
+qqnorm(residuals(m))
+qqline(residuals(m)) #residuals need to be normally distributed
+RSS=sum(residuals(m)^2) #residual sum of squares
+TSS=sum((y - mean(y))^2) # total sum of sqaures
+R.square=1 - (RSS/TSS)
+R.square
+getInitial(height ~ SSlogis(age,  Asym, xmid, scal), data = Loblolly)
+y.ss <- nls(height ~ SSlogis(age, Asym, xmid, scal), data = Loblolly)
+summary(y.ss)
+alpha <- coef(y.ss)  #extracting coefficients
+plot(height ~ age, data = Loblolly, main = "Logistic Growth Model of Trees",
+xlab = "Age", ylab = "Height")  # Census data
+curve(alpha[1]/(1 + exp(-(x - alpha[2])/alpha[3])), add = T, col = "blue")  # Fitted model
+qqnorm(residuals(y.ss))
+qqline(residuals(y.ss))
+fm1 <- nls(height ~ SSgompertz(log(age), Asym, b2, b3),
+data = Loblolly)
+summary(fm1)
+alpha <- coef(fm1)
+qqnorm(residuals(fm1))
+qqline(residuals(fm1))
+chapm <- function(x,Asym,b,c)Asym*(1-exp(-b*x))^c
+nls_lob <- nls(height ~
+chapm(age, Asym, b,c),
+data=Loblolly,
+start=list(Asym=100, b=0.1, c=2.5))
+library(nlshelper)
+install.packages("nlshelper")
+plot_nls(nls_lob, ylim=c(0,80), xlim=c(0,30))
+library(nlshelper)
+plot_nls(nls_lob, ylim=c(0,80), xlim=c(0,30))
+q=seq(0,100,1)
+p =0.6
+y=500 + p*(q-10)^3
+plot(q,y,type='l',col='red',main='Nonlinear relationship',lwd=5)
+data("ChickWeight")
+head(ChickWeight)
+cw1 <- subset(ChickWeight,Diet=='1')
+head(cw1)
+plot(weight ~ Time, data = cw1)
+fit1= lm(weight ~ Time, data = cw1)
+summary(fit1)
+AIC(fit1)
+fit2= lm(weight ~ Time+ I(Time*Time), data = cw1) #polynomial terms
+summary(fit2)
+AIC(fit2)
+fit3=lm(weight ~ Time+ I(Time*Time)+I(Time*Time*Time), data = cw1)
+summary(fit3)
+AIC(fit3)
+fit2a= lm(weight ~ poly(Time,2), data = cw1)
+summary(fit2a)
+AIC(fit2a)
+fit3a= lm(weight ~ poly(Time,3), data = cw1)
+summary(fit3a)
+AIC(fit3a)
+library(nls2) #earlier version nls
+data("Loblolly")
+str(Loblolly)
+head(Loblolly)
+plot(Loblolly$age,Loblolly$height)
+x = Loblolly$age
+y =Loblolly$height
+m <- nls(y ~ a + b * I(x^z), start = list(a = 1, b = 1, z = 1))
+m
+lines(x, fitted(m), lty = 2, col = "red", lwd = 2)
+qqnorm(residuals(m))
+qqline(residuals(m)) #residuals need to be normally distributed
+RSS=sum(residuals(m)^2) #residual sum of squares
+TSS=sum((y - mean(y))^2) # total sum of sqaures
+R.square=1 - (RSS/TSS)
+R.square
+getInitial(height ~ SSlogis(age,  Asym, xmid, scal), data = Loblolly)
+y.ss <- nls(height ~ SSlogis(age, Asym, xmid, scal), data = Loblolly)
+summary(y.ss)
+alpha <- coef(y.ss)  #extracting coefficients
+plot(height ~ age, data = Loblolly, main = "Logistic Growth Model of Trees",
+xlab = "Age", ylab = "Height")  # Census data
+curve(alpha[1]/(1 + exp(-(x - alpha[2])/alpha[3])), add = T, col = "blue")  # Fitted model
+qqnorm(residuals(y.ss))
+qqline(residuals(y.ss))
+fm1 <- nls(height ~ SSgompertz(log(age), Asym, b2, b3),
+data = Loblolly)
+summary(fm1)
+alpha <- coef(fm1)
+qqnorm(residuals(fm1))
+qqline(residuals(fm1))
+chapm <- function(x,Asym,b,c)Asym*(1-exp(-b*x))^c
+nls_lob <- nls(height ~
+chapm(age, Asym, b,c),
+data=Loblolly,
+start=list(Asym=100, b=0.1, c=2.5))
+plot_nls(nls_lob, ylim=c(0,80), xlim=c(0,30))
+0
+p =0.6
+y=500 + p*(q-10)^3
+plot(q,y,type='l',col='red',main='Nonlinear relationship',lwd=5)
+data("ChickWeight")
+head(ChickWeight)
+cw1 <- subset(ChickWeight,Diet=='1')
+head(cw1)
+plot(weight ~ Time, data = cw1)
+fit1= lm(weight ~ Time, data = cw1)
+summary(fit1)
+fit2= lm(weight ~ Time+ I(Time*Time), data = cw1) #polynomial terms
+summary(fit2)
+fit3=lm(weight ~ Time+ I(Time*Time)+I(Time*Time*Time), data = cw1)
+summary(fit3)
+fit2a= lm(weight ~ poly(Time,2), data = cw1)
+summary(fit2a)
+data("Loblolly")
+str(Loblolly)
+head(Loblolly)
+plot(Loblolly$age,Loblolly$height)
+x = Loblolly$age
+y =Loblolly$height
+m <- nls(y ~ a + b * I(x^z), start = list(a = 1, b = 1, z = 1))
+m
+lines(x, fitted(m), lty = 2, col = "red", lwd = 2)
+qqnorm(residuals(m))
+qqline(residuals(m)) #residuals need to be normally distributed
+RSS=sum(residuals(m)^2) #residual sum of squares
+TSS=sum((y - mean(y))^2) # total sum of sqaures
+R.square=1 - (RSS/TSS)
+R.square
+getInitial(height ~ SSlogis(age,  Asym, xmid, scal), data = Loblolly)
+y.ss <- nls(height ~ SSlogis(age, Asym, xmid, scal), data = Loblolly)
+summary(y.ss)
+alpha <- coef(y.ss)  #extracting coefficients
+plot(height ~ age, data = Loblolly, main = "Logistic Growth Model of Trees",
+xlab = "Age", ylab = "Height")  # Census data
+curve(alpha[1]/(1 + exp(-(x - alpha[2])/alpha[3])), add = T, col = "blue")  # Fitted model
+fm1 <- nls(height ~ SSgompertz(log(age), Asym, b2, b3),
+data = Loblolly)
+summary(fm1)
+alpha <- coef(fm1)
+qqnorm(residuals(fm1))
+qqline(residuals(fm1))
+nls_lob <- nls(height ~
+chapm(age, Asym, b,c),
+data=Loblolly,
+start=list(Asym=100, b=0.1, c=2.5))
+plot_nls(nls_lob, ylim=c(0,80), xlim=c(0,30))
+requires(sdm)
+require(sdm)
+m =sdm(pb~.,data=training,methods=c('rf','tree','fda','mars','svm'),
+replicatin='boot',n=10)
+m =sdm(pb~.,data=training,methods=c('rf','tree','fda','mars','svm'),
+replicatin='boot',n=10)
+m <- sdm(Occurrence~.,data=d,methods=c('rf','tree','fda','mars','svm'),
+replicatin='boot',n=10)
+d <- sdmData(formula=pb~., train=training, predictors=stck)
+require(raster)
+datafiles = Sys.glob("*.tif") #Or whatever identifies your files
+datafiles #list of predictors
+stck = stack() #empty raster stack for storing raster layers
+for(i in 1:NROW(datafiles)){
+tempraster = raster(datafiles[i])
+stck = stack(stck,tempraster)
+}
+d <- sdmData(formula=pb~., train=training, predictors=stck)
